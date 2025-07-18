@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>🎨 Comic Book Effect Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-family: 'Permanent Marker', cursive;
+      font-size: 48px;
+      color: #ffc400;
+      text-shadow: 2px 2px 5px #ff4c4c;
+    }
+
+    .uploader, .controls {
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    input[type="file"] {
+      background: #fff;
+      color: #000;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+      width: 100%;
+      max-width: 800px;
+    }
+
+    .style-card {
+      background: #2f2f2f;
+      border: 2px solid #444;
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .style-card:hover {
+      background: #444;
+      border-color: #ff4c4c;
+    }
+
+    .style-card.selected {
+      border-color: #ffc400;
+      box-shadow: 0 0 10px #ffc400;
+    }
+
+    .style-card h4 {
+      margin: 10px 0 5px;
+      font-size: 18px;
+      color: #ffc400;
+    }
+
+    .style-card p {
+      font-size: 13px;
+      color: #ccc;
+      margin: 0;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 18px;
+      background-color: #ff4c4c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #e43d3d;
+    }
+
+    img#resultImage {
+      margin-top: 30px;
+      max-width: 700px;
+      border: 3px solid #fff;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .download-btn {
+      margin-top: 15px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Comic Book Effect</h1>
+
+  <div class="uploader">
+    <input type="file" id="imageInput" accept="image/*">
+  </div>
+
+  <div class="controls">
+    <h3>Choose a Comic Style:</h3>
+    <div class="style-grid" id="styleGrid">
+      <!-- Style cards will be generated dynamically -->
+    </div>
+  </div>
+
+  <button onclick="uploadImage()">✨ Generate Comic</button>
+
+  <div id="output">
+    <h3>Processed Image:</h3>
+    <img id="resultImage">
+    <br>
+    <a id="downloadLink" class="download-btn" download="comic.png">
+      <button>⬇️ Download Image</button>
+    </a>
+  </div>
+
+  <script>
+    const styles = [
+      { id: 'sketch', title: '1. Sketch Tint', description: 'Soft, light pencil look' },
+      { id: 'soft', title: '2. Soft Comic', description: 'Smooth edges & colors' },
+      { id: 'classic', title: '3. Classic Comic', description: 'Balanced comic effect' },
+      { id: 'bold', title: '4. Bold Comic', description: 'Pop-art comic style' },
+      { id: 'ink', title: '5. Ink Explosion', description: 'Dramatic inky outlines' }
+    ];
+
+    let selectedStyle = 'classic';
+
+    const styleGrid = document.getElementById('styleGrid');
+
+    styles.forEach(style => {
+      const card = document.createElement('div');
+      card.className = 'style-card' + (style.id === 'classic' ? ' selected' : '');
+      card.setAttribute('data-style', style.id);
+      card.innerHTML = `
+        <h4>${style.title}</h4>
+        <p>${style.description}</p>
+      `;
+      card.onclick = () => {
+        document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedStyle = style.id;
+      };
+      styleGrid.appendChild(card);
+    });
+
+    function uploadImage() {
+      const input = document.getElementById('imageInput');
+      const file = input.files[0];
+      if (!file) {
+        alert("Please select an image.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("style", selectedStyle);
+
+      fetch("/process", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const img = document.getElementById("resultImage");
+        const download = document.getElementById("downloadLink");
+
+        img.src = url;
+        img.style.display = "block";
+
+        download.href = url;
+        download.style.display = "inline-block";
+      })
+      .catch(err => {
+        console.error("Error:", err);
+        alert("Something went wrong.");
+      });
+    }
+  </script>
+
+</body>
+</html>
